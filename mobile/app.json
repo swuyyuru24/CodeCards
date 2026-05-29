@@ -8,7 +8,8 @@
         {
           "cameraPermission": "Allow CodeCards to access your camera to snap code and create flashcards."
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "version": "1.0.0",
     "orientation": "portrait",

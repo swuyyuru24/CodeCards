@@ -7,11 +7,20 @@ import {
   View,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+
+import { insertCard } from '../db/cards';
+import type { RootTabParamList } from '../navigation';
+
+type Nav = BottomTabNavigationProp<RootTabParamList>;
 
 export default function CaptureScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const cameraRef = useRef<CameraView>(null);
+  const navigation = useNavigation<Nav>();
 
   if (!permission) {
     return (
@@ -35,6 +44,31 @@ export default function CaptureScreen() {
     );
   }
 
+  const handleUsePhoto = async () => {
+    if (!photoUri || saving) return;
+    setSaving(true);
+    try {
+      await insertCard({
+        mode: 'dsa',
+        problem: 'Untitled card from photo',
+        approach: null,
+        timeComplexity: null,
+        spaceComplexity: null,
+        keyInsight: null,
+        edgeCases: null,
+        difficulty: null,
+        patterns: [],
+        confidence: 3,
+        nextReviewAt: null,
+        photoUri,
+      });
+      setPhotoUri(null);
+      navigation.navigate('Decks');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (photoUri) {
     return (
       <View style={styles.preview}>
@@ -43,17 +77,18 @@ export default function CaptureScreen() {
           <Pressable
             style={[styles.button, styles.buttonSecondary]}
             onPress={() => setPhotoUri(null)}
+            disabled={saving}
           >
             <Text style={styles.buttonText}>Retake</Text>
           </Pressable>
           <Pressable
             style={styles.button}
-            onPress={() => {
-              // TODO: hand photoUri to card-generation pipeline
-              setPhotoUri(null);
-            }}
+            onPress={handleUsePhoto}
+            disabled={saving}
           >
-            <Text style={styles.buttonText}>Use photo</Text>
+            <Text style={styles.buttonText}>
+              {saving ? 'Saving…' : 'Use photo'}
+            </Text>
           </Pressable>
         </View>
       </View>
